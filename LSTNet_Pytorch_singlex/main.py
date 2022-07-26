@@ -7,11 +7,15 @@ import torch.nn as nn
 
 from Optim import Optim
 from utils import *
+from datetime import date
+import time
 
 import matplotlib.pyplot as plt
 
-plt.cla()
-
+# plt.cla()
+fig = plt.figure(figsize=(8,6))
+ax1 = fig.add_subplot(2,1,1)
+ax2 = fig.add_subplot(2,1,2)
 
 def evaluate(data, X, Y, model, evaluateL2, evaluateL1, batch_size,flag=False):
     model.eval()
@@ -20,14 +24,22 @@ def evaluate(data, X, Y, model, evaluateL2, evaluateL1, batch_size,flag=False):
     n_samples = 0
     predict = None
     test = None
+    predict_ = None
+    test_ = None
 
     for X, Y in data.get_batches(X, Y, batch_size, False):
         output = model(X)
         if predict is None:
+            scale = data.scale.expand(output.size(0), data.m)
             predict = output
             test = Y
+            predict_ = output*scale
+            test_ = Y*scale
         else:
-            predict = torch.cat((predict, output))
+            scale = data.scale.expand(output.size(0), data.m)
+            predict_ = torch.cat((predict_, output*scale))
+            test_ = torch.cat((test_, Y*scale))
+            predict = torch.cat((predict,output))
             test = torch.cat((test, Y))
 
         scale = data.scale.expand(output.size(0), data.m)
@@ -35,11 +47,13 @@ def evaluate(data, X, Y, model, evaluateL2, evaluateL1, batch_size,flag=False):
         total_loss += evaluateL2((output * scale)[:,-3:], (Y * scale)[:,-3:]).item()
         total_loss_l1 += evaluateL1(output * scale, Y * scale).item()
         n_samples += (output.size(0) * data.m)
-    rse = math.sqrt(total_loss / n_samples) / data.rse
+    rse = math.sqrt(total_loss / n_samples)
     rae = (total_loss_l1 / n_samples) / data.rae
 
     predict = predict.data.cpu().numpy()
     Ytest = test.data.cpu().numpy()
+    predict_ = predict_.data.cpu().numpy()
+    Ytest_ = test_.data.cpu().numpy()
     sigma_p = predict.std(axis=0)
     sigma_g = Ytest.std(axis=0)
     mean_p = predict.mean(axis=0)
@@ -49,17 +63,33 @@ def evaluate(data, X, Y, model, evaluateL2, evaluateL1, batch_size,flag=False):
     correlation = (correlation[index]).mean()
 
     if(flag):
-        print("predict:",predict.shape)
-        predict_ = predict[:][-1]
-        Ytest_ = Ytest[:][-1]
+        # scale = data.scale.expand(output.size(0), data.m)
+        # predict_ = predict*scale
+        # Ytest_ = Ytest*scale
+        predict1_ = predict[:,-1]
+        Ytest1_ = Ytest[:,-1]
+
+        predict2_ = predict[:,-2]
+        Ytest2_ = Ytest[:,-2]
+
+        predict1_local = predict1_[-5:]
+        Ytest1_local = Ytest1_[-5:]
+        print("predict_!!!!!:",predict1_.shape)
         # print("predict_:",predict_.shape,predict_[:,-1].shape)
-        # print("Ytest: ",Ytest.shape)
         # plt.clf()
-        plt.cla()
-        plt.plot(range(len(predict_)),predict_,label='predict')
-        plt.plot(range(len(Ytest_)),Ytest_,label = 'true')
-        plt.legend()
-        
+        ax1.cla()
+        ax2.cla()
+        # plt.subplot(2,2,1)
+        ax1.plot(range(len(predict1_)),predict1_,label='predict1')
+        ax1.plot(range(len(Ytest1_)),Ytest1_,label = 'true1')
+        ax1.legend()
+        # plt.subplot(2,2,2)
+        ax2.plot(range(len(predict1_local)),predict1_local,label='predict1_local')
+        ax2.plot(range(len(Ytest1_local)),Ytest1_local,label = 'true1_local')
+        ax2.legend()
+        today = date.today()
+        timenow = time.strftime("%Y-%m-%d-%H", time.localtime())
+        plt.savefig('save/fig/test'+timenow+'.jpg')
         plt.pause(0.1)
         # plt.draw()
 
@@ -91,17 +121,17 @@ parser.add_argument('--hidCNN', type=int, default=50,
                     help='number of CNN hidden units')
 parser.add_argument('--hidRNN', type=int, default=50,
                     help='number of RNN hidden units')
-parser.add_argument('--window', type=int, default=24,
+parser.add_argument('--window', type=int, default=36,
                     help='window size')
 parser.add_argument('--CNN_kernel', type=int, default=6,
                     help='the kernel size of the CNN layers')
-parser.add_argument('--highway_window', type=int, default=24,
+parser.add_argument('--highway_window', type=int, default=36,
                     help='The window size of the highway component')
 parser.add_argument('--clip', type=float, default=10.,
                     help='gradient clipping')
 parser.add_argument('--epochs', type=int, default=100,
                     help='upper epoch limit')
-parser.add_argument('--batch_size', type=int, default=128, metavar='N',
+parser.add_argument('--batch_size', type=int, default=256, metavar='N',
                     help='batch size')
 parser.add_argument('--dropout', type=float, default=0.2,
                     help='dropout applied to layers (0 = no dropout)')
@@ -114,8 +144,8 @@ parser.add_argument('--save', type=str, default='models/exchange_rate.pt',
                     help='path to save the final model')
 parser.add_argument('--cuda', type=str, default=False)
 parser.add_argument('--optim', type=str, default='adam')
-parser.add_argument('--lr', type=float, default=0.001)
-parser.add_argument('--horizon', type=int, default=12)
+parser.add_argument('--lr', type=float, default=0.0009)
+parser.add_argument('--horizon', type=int, default=5)
 parser.add_argument('--skip', type=float, default=1)
 parser.add_argument('--hidSkip', type=int, default=5)
 parser.add_argument('--L1Loss', type=bool, default=False)
@@ -174,7 +204,8 @@ try:
         # Save the model if the validation loss is the best we've seen so far.
 
         if val_loss < best_val:
-            with open(args.save, 'wb') as f:
+            timenow = time.strftime("%Y-%m-%d-%H", time.localtime())
+            with open(args.save+timenow+'.pt', 'wb') as f:
                 torch.save(model, f)
             best_val = val_loss
         if epoch % 5 == 0:
@@ -187,8 +218,8 @@ except KeyboardInterrupt:
     print('Exiting from training early')
 
 # Load the best saved model.
-with open(args.save, 'rb') as f:
+with open(args.save+timenow+'.pt', 'rb') as f:
     model = torch.load(f)
 test_acc, test_rae, test_corr = evaluate(Data, Data.test[0], Data.test[1], model, evaluateL2, evaluateL1,
                                          args.batch_size,True)
-print("test rse {:5.4f} | test rae {:5.4f} | test corr {:5.4f}".format(test_acc, test_rae, test_corr))
+print("test_loss {:5.4f} | test rae {:5.4f} | test corr {:5.4f}".format(test_acc, test_rae, test_corr))
