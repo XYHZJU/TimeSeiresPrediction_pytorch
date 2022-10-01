@@ -7,7 +7,7 @@ python -u run.py \
   --root_path ./dataset/exchange_rate/ \
   --data_path exchange_rate.csv \
   --model_id Exchange_96_96 \
-  --model Transformer \
+  --model LogTrans \
   --data custom \
   --features M \
   --seq_len 96 \
@@ -27,7 +27,7 @@ python -u run.py \
   --root_path ./dataset/exchange_rate/ \
   --data_path exchange_rate.csv \
   --model_id Exchange_96_192 \
-  --model Transformer \
+  --model LogTrans \
   --data custom \
   --features M \
   --seq_len 96 \
@@ -47,7 +47,7 @@ python -u run.py \
   --root_path ./dataset/exchange_rate/ \
   --data_path exchange_rate.csv \
   --model_id Exchange_96_336 \
-  --model Transformer \
+  --model LogTrans \
   --data custom \
   --features M \
   --seq_len 96 \
@@ -68,7 +68,7 @@ python -u run.py \
   --root_path ./dataset/exchange_rate/ \
   --data_path exchange_rate.csv \
   --model_id Exchange_96_720 \
-  --model Transformer \
+  --model LogTrans \
   --data custom \
   --features M \
   --seq_len 96 \

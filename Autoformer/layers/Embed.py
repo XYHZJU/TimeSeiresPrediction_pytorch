@@ -112,7 +112,7 @@ class context_embedding(torch.nn.Module):
         self.causal_convolution = CausalConv1d(in_channels,embedding_size,kernel_size=k)
 
     def forward(self,x):
-        x = self.causal_convolution(x)
+        x = self.causal_convolution(x.permute(0,2,1)).transpose(1,2)
         return F.tanh(x)
 
 
@@ -210,7 +210,7 @@ class DataEmbedding(nn.Module):
 
 class ConvEmbedding(nn.Module):
     def __init__(self, c_in, d_model, embed_type='fixed', freq='h', dropout=0.1):
-        super(DataEmbedding, self).__init__()
+        super(ConvEmbedding, self).__init__()
 
         self.value_embedding = context_embedding(in_channels=c_in, embedding_size=d_model)
         self.position_embedding = PositionalEmbedding(d_model=d_model)
@@ -220,6 +220,9 @@ class ConvEmbedding(nn.Module):
         self.dropout = nn.Dropout(p=dropout)
 
     def forward(self, x, x_mark):
+        # print('embed: ',self.value_embedding(x).shape)
+        # print('temp: ',self.temporal_embedding(x_mark).shape)
+        # print('pos: ',self.position_embedding(x).shape)
         x = self.value_embedding(x) + self.temporal_embedding(x_mark) + self.position_embedding(x)
         return self.dropout(x)
 
