@@ -41,6 +41,7 @@ def relative_to_absolute(q):
     flat_x_padded = torch.cat((flat_x, flat_pad), dim=2)
     final_x = flat_x_padded.reshape(b, h, l + 1, 2 * l - 1)
     final_x = final_x[:, :, :l, (l - 1):]
+    # print(final_x.shape)
     return final_x
 
 
@@ -52,8 +53,11 @@ def rel_pos_emb_1d(q, rel_emb, shared_heads):
         rel_emb: a 2D or 3D tensor
         of shape [ 2*tokens-1 , dim] or [ heads, 2*tokens-1 , dim]
     """
+    # print('q:',q.shape)
+    # print('rel_emb:',rel_emb.shape)
+    device = torch.device('cuda:0')
     if shared_heads:
-        emb = torch.einsum('b h t d, r d -> b h t r', q, rel_emb)
+        emb = torch.einsum('b h t d, r d -> b h t r', q.to(device), rel_emb.to(device))
     else:
         emb = torch.einsum('b h t d, h r d -> b h t r', q, rel_emb)
     return relative_to_absolute(emb)
@@ -78,7 +82,10 @@ class RelPosEmb1D(nn.Module):
             self.rel_pos_emb = nn.Parameter(torch.randn(heads, 2 * tokens - 1, dim_head) * scale)
 
     def forward(self, q):
+        # print(q.shape)
+        # print(self.rel_pos_emb.shape)
         return rel_pos_emb_1d(q, self.rel_pos_emb, self.shared_heads)
+        
 
 class CausalConv1d(torch.nn.Conv1d):
     def __init__(self,
@@ -128,6 +135,7 @@ class TokenEmbedding(nn.Module):
 
     def forward(self, x):
         x = self.tokenConv(x.permute(0, 2, 1)).transpose(1, 2)
+        # print("token",x.shape)
         return x
 
 
@@ -177,8 +185,9 @@ class TemporalEmbedding(nn.Module):
         weekday_x = self.weekday_embed(x[:, :, 2])
         day_x = self.day_embed(x[:, :, 1])
         month_x = self.month_embed(x[:, :, 0])
-
-        return hour_x + weekday_x + day_x + month_x + minute_x
+        res = hour_x + weekday_x + day_x + month_x + minute_x
+        # print("temporal",res.shape)
+        return res
 
 
 class TimeFeatureEmbedding(nn.Module):
@@ -192,6 +201,21 @@ class TimeFeatureEmbedding(nn.Module):
     def forward(self, x):
         return self.embed(x)
 
+
+class RelEmbedding(nn.Module):
+    def __init__(self, c_in, d_model, embed_type='fixed', freq='h', dropout=0.1):
+        super(RelEmbedding, self).__init__()
+
+        self.value_embedding = TokenEmbedding(c_in=c_in, d_model=d_model)
+        self.position_embedding = RelPosEmb1D(tokens=c_in, dim_head=d_model)
+        self.temporal_embedding = TemporalEmbedding(d_model=d_model, embed_type=embed_type,
+                                                    freq=freq) if embed_type != 'timeF' else TimeFeatureEmbedding(
+            d_model=d_model, embed_type=embed_type, freq=freq)
+        self.dropout = nn.Dropout(p=dropout)
+
+    def forward(self, x, x_mark):
+        x = self.value_embedding(x) + self.temporal_embedding(x_mark) + self.position_embedding(x)
+        return self.dropout(x)
 
 class DataEmbedding(nn.Module):
     def __init__(self, c_in, d_model, embed_type='fixed', freq='h', dropout=0.1):

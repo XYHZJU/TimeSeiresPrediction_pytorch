@@ -1,7 +1,7 @@
 # from Autoformer.models import LogTrans
 from data_provider.data_factory import data_provider
 from exp.exp_basic import Exp_Basic
-from models import Informer, Autoformer, Transformer, Reformer, LogTrans
+from models import Informer, Autoformer, Transformer, Reformer, LogTrans, Fusformer, AutoCoTransformer
 from utils.tools import EarlyStopping, adjust_learning_rate, visual
 from utils.metrics import metric
 
@@ -31,6 +31,8 @@ class Exp_Main(Exp_Basic):
             'Informer': Informer,
             'Reformer': Reformer,
             'LogTrans': LogTrans,
+            'Fusformer': Fusformer,
+            'AutoCoTransformer': AutoCoTransformer
         }
         model = model_dict[self.args.model].Model(self.args).float()
 
