@@ -4,7 +4,7 @@ from matplotlib import pyplot as plt
 
 def random_walk( 
     data, start_value=0, threshold=0.5,  
-    step_size=1,noise_size = 1.2, min_value=-np.inf, max_value=np.inf 
+    step_size=0.5,noise_size = 5, min_value=-np.inf, max_value=np.inf, totaldim = 20 
     ): 
     previous_value = start_value
     trend_value = start_value
@@ -26,7 +26,25 @@ def random_walk(
                 trend[dim,index] = trend_value - step_size *randomsize*10
             previous_value = data[dim,index]
             trend_value = trend[dim,index]
-    return trend+data
+    result = trend+data
+    for i in range(totaldim - x):
+        total = 0
+        linearsum = np.zeros((1,y))
+        for j in np.random.choice(x,x-2):
+            delay = random.randint(1,10)
+            temp = data[j,:]
+            delay_seq = temp[:delay]
+            temp = np.hstack((delay_seq,temp))
+            value = random.uniform(1,10)
+            print(value)
+            total = total + value
+            linearsum = linearsum + value*temp[:y]
+        linearsum = linearsum/total
+        
+        result= np.row_stack((result,linearsum))
+        print(result.shape)
+         
+    return result
 
 def generate_data(dimension,length):
     alpha = []
@@ -54,6 +72,8 @@ def generate_data(dimension,length):
 def draw_graph(data):
     # print(data.shape)
     x,y = data.shape
+    x = 10
+    # data = data[-5:,:]
     plt.cla()
     for i in range(1, x+1):
         plt.subplot(x, 1, i)
@@ -61,9 +81,14 @@ def draw_graph(data):
         plt.plot(length,data[i-1,:])
     plt.show()
 
-data = generate_data(5,500)
+data = generate_data(5,10000)
+data = random_walk(data).T
+
+# draw_graph(data.T)
+
+np.savetxt('Autoformer/dataset/datagen/test2.csv', data, delimiter=',')
 # data = np.zeros((5,500))
-draw_graph(random_walk(data))
+# draw_graph(random_walk(data))
 # draw_graph(data)
 
 
