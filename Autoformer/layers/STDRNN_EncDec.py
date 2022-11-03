@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from layers.Autoformer_EncDec import series_decomp
-from Autoformer_EncDec import Decoder
+from layers.Autoformer_EncDec import Decoder
 
 
 class RNNEncoderLayer(nn.Module):

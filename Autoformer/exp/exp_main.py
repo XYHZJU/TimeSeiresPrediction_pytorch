@@ -1,7 +1,7 @@
 # from Autoformer.models import LogTrans
 from data_provider.data_factory import data_provider
 from exp.exp_basic import Exp_Basic
-from models import Informer, Autoformer, Transformer, Reformer, LogTrans, Fusformer, AutoCoTransformer
+from models import Informer, Autoformer, Transformer, Reformer, LogTrans, Fusformer, AutoCoTransformer, Linear_block, STDRNN_singlelayer, STDRNN_multilayer
 from utils.tools import EarlyStopping, adjust_learning_rate, visual
 from utils.metrics import metric
 
@@ -32,7 +32,10 @@ class Exp_Main(Exp_Basic):
             'Reformer': Reformer,
             'LogTrans': LogTrans,
             'Fusformer': Fusformer,
-            'AutoCoTransformer': AutoCoTransformer
+            'AutoCoTransformer': AutoCoTransformer,
+            'Linear':Linear_block,
+            'SingleRNN':STDRNN_singlelayer,
+            'MultyRNN':STDRNN_multilayer
         }
         model = model_dict[self.args.model].Model(self.args).float()
 
@@ -100,6 +103,11 @@ class Exp_Main(Exp_Basic):
         path = os.path.join(self.args.checkpoints, setting)
         if not os.path.exists(path):
             os.makedirs(path)
+        
+        folder_path = './train_loss/' + setting + '/'
+        if not os.path.exists(folder_path):
+            os.makedirs(folder_path)
+
 
         time_now = time.time()
 
@@ -108,6 +116,9 @@ class Exp_Main(Exp_Basic):
 
         model_optim = self._select_optimizer()
         criterion = self._select_criterion()
+        train_loss_curve = []
+        test_loss_curve = []
+        vali_loss_curve = []
 
         if self.args.use_amp:
             scaler = torch.cuda.amp.GradScaler()
@@ -115,6 +126,8 @@ class Exp_Main(Exp_Basic):
         for epoch in range(self.args.train_epochs):
             iter_count = 0
             train_loss = []
+
+            
 
             self.model.train()
             epoch_time = time.time()
@@ -177,6 +190,12 @@ class Exp_Main(Exp_Basic):
             vali_loss = self.vali(vali_data, vali_loader, criterion)
             test_loss = self.vali(test_data, test_loader, criterion)
 
+            train_loss_curve.append(train_loss)
+            vali_loss_curve.append(vali_loss)
+            test_loss_curve.append(test_loss)
+
+            
+
             print("Epoch: {0}, Steps: {1} | Train Loss: {2:.7f} Vali Loss: {3:.7f} Test Loss: {4:.7f}".format(
                 epoch + 1, train_steps, train_loss, vali_loss, test_loss))
             early_stopping(vali_loss, self.model, path)
@@ -188,8 +207,31 @@ class Exp_Main(Exp_Basic):
 
         best_model_path = path + '/' + 'checkpoint.pth'
         self.model.load_state_dict(torch.load(best_model_path))
+        print("-----PLOTING-----")
+        self.plot_loss(train_loss_curve, vali_loss_curve, test_loss_curve, folder_path)
 
         return self.model
+    
+    def plot_loss(self, train, vali, test, path):
+        
+        fig = plt.figure(figsize = (7,5))
+        # plt.plot(x,y,'g-',label=u'Dense_Unet(block layer=5)')`
+        x = range(0,len(train))
+        print("ploting program: length: ",x)
+        # ‘’g‘’代表“green”,表示画出的曲线是绿色，“-”代表画的曲线是实线，可自行选择，label代表的是图例的名称，一般要在名称前面加一个u，如果名称是中文，会显示不出来，目前还不知道怎么解决。
+        p1 = plt.plot(x, train,'r-', label = u'train')
+        plt.legend()
+        #显示图例
+        p2 = plt.plot(x,test, 'b-', label = u'test')
+        plt.legend()
+        p3 = plt.plot(x,vali, 'g-', label = u'vali')
+        plt.legend()
+        plt.xlabel(u'epoches')
+        plt.ylabel(u'loss')
+        plt.title('training loss')
+        plt.savefig(path+'loss.jpg')
+
+
 
     def test(self, setting, test=0):
         test_data, test_loader = self._get_data(flag='test')
@@ -258,16 +300,16 @@ class Exp_Main(Exp_Basic):
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
 
-        mae, mse, rmse, mape, mspe = metric(preds, trues)
-        print('mse:{}, mae:{}'.format(mse, mae))
+        mae, mse, rmse, mape, mspe, r2 = metric(preds, trues)
+        print('mse:{}, mae:{}, rmse:{}, r2:{}'.format(mse, mae,rmse,r2))
         f = open("result.txt", 'a')
         f.write(setting + "  \n")
-        f.write('mse:{}, mae:{}'.format(mse, mae))
+        f.write('mse:{}, mae:{}, rmse:{}, r2:{}'.format(mse, mae,rmse,r2))
         f.write('\n')
         f.write('\n')
         f.close()
 
-        np.save(folder_path + 'metrics.npy', np.array([mae, mse, rmse, mape, mspe]))
+        np.save(folder_path + 'metrics.npy', np.array([mae, mse, rmse, mape, mspe, r2]))
         np.save(folder_path + 'pred.npy', preds)
         np.save(folder_path + 'true.npy', trues)
 
