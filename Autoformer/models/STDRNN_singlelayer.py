@@ -1,12 +1,12 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from layers.Autoformer_Encdec import series_decomp
+from layers.Autoformer_EncDec import series_decomp
 
 
-class STDSeq2Seq_SingleL(nn.Module):
+class Model(nn.Module):
     def __init__(self, configs):
-        super(STDSeq2Seq_SingleL, self).__init__()
+        super(Model, self).__init__()
         self.train = configs.Seq2SeqtrainState
         self.pred_len = configs.pred_len
         self.dec_out = configs.dec_out

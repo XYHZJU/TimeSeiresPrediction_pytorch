@@ -3,9 +3,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-class Seq2SeqRNN(nn.Module):
+class Model(nn.Module):
     def __init__(self, configs):
-        super(Seq2SeqRNN, self).__init__()
+        super(Model, self).__init__()
         self.train = configs.Seq2SeqtrainState
         self.pred_len = configs.pred_len
         self.dec_out = configs.dec_out
