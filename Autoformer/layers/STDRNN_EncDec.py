@@ -47,13 +47,13 @@ class RNNDecoderLayer(nn.Module):
             self.activation = F.gelu
 
         
-        def forward(self, x, init_hidden):
-            dec_out, _ = self.rnn(x, init_hidden)
-            # residual connection & decomposition
-            x = x + self.activation(dec_out)
-            x, residual_trend = self.decomp(x)
-            residual_trend = self.projection(residual_trend.permute(0, 2, 1)).transpose(1,2)
-            return x, residual_trend
+    def forward(self, x, init_hidden):
+        dec_out, _ = self.rnn(x, init_hidden)
+        # residual connection & decomposition
+        x = x + self.activation(dec_out)
+        x, residual_trend = self.decomp(x)
+        residual_trend = self.projection(residual_trend.permute(0, 2, 1)).transpose(1,2)
+        return x, residual_trend
 
 
 class STDRNNDecoder(Decoder):

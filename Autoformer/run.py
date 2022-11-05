@@ -44,6 +44,7 @@ def main():
     parser.add_argument('--c_out', type=int, default=7, help='output size')
     parser.add_argument('--d_model', type=int, default=512, help='dimension of model')
     parser.add_argument('--n_heads', type=int, default=8, help='num of heads')
+    parser.add_argument('--rnn_layers', type=int, default=2, help='num of rnn layers')
     parser.add_argument('--e_layers', type=int, default=2, help='num of encoder layers')
     parser.add_argument('--d_layers', type=int, default=1, help='num of decoder layers')
     parser.add_argument('--d_ff', type=int, default=2048, help='dimension of fcn')
@@ -59,6 +60,7 @@ def main():
     parser.add_argument('--use_activation', type=bool, default=True, help='use_activation')
     parser.add_argument('--output_attention', action='store_true', help='whether to output attention in encoder')
     parser.add_argument('--do_predict', action='store_true', help='whether to predict unseen future data')
+    parser.add_argument('--Seq2SeqtrainState', type=bool, default=True, help='Seq2SeqtrainState')
 
     # optimization
     parser.add_argument('--num_workers', type=int, default=0, help='data loader num workers')

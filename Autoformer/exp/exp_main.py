@@ -35,7 +35,7 @@ class Exp_Main(Exp_Basic):
             'AutoCoTransformer': AutoCoTransformer,
             'Linear':Linear_block,
             'SingleRNN':STDRNN_singlelayer,
-            'MultyRNN':STDRNN_multilayer
+            'MultiRNN':STDRNN_multilayer
         }
         model = model_dict[self.args.model].Model(self.args).float()
 
@@ -128,7 +128,6 @@ class Exp_Main(Exp_Basic):
             train_loss = []
 
             
-
             self.model.train()
             epoch_time = time.time()
             for i, (batch_x, batch_y, batch_x_mark, batch_y_mark) in enumerate(train_loader):
