@@ -233,7 +233,8 @@ class Exp_Main(Exp_Basic):
 
 
     def test(self, setting, test=0):
-        test_data, test_loader = self._get_data(flag='test')
+        test_data, test_loader = self._get_data(flag=self.args.validate_dataset)
+        print('validate dataset:{}'.format(self.args.validate_dataset))
         if test:
             print('loading model')
             self.model.load_state_dict(torch.load(os.path.join('./checkpoints/' + setting, 'checkpoint.pth')))
@@ -298,8 +299,11 @@ class Exp_Main(Exp_Basic):
         folder_path = './results/' + setting + '/'
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
+        
+        validate_step = min(self.args.validate_step,self.args.pred_len)
+        print('calculate the loss of {}-th step'.format(validate_step))
 
-        mae, mse, rmse, mape, mspe, r2 = metric(preds, trues)
+        mae, mse, rmse, mape, mspe, r2 = metric(preds[:,validate_step-1,:], trues[:,validate_step-1,:])
         print('mse:{}, mae:{}, rmse:{}, r2:{}'.format(mse, mae,rmse,r2))
         f = open("result.txt", 'a')
         f.write(setting + "  \n")

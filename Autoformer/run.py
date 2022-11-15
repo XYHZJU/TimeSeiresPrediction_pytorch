@@ -61,6 +61,8 @@ def main():
     parser.add_argument('--output_attention', action='store_true', help='whether to output attention in encoder')
     parser.add_argument('--do_predict', action='store_true', help='whether to predict unseen future data')
     parser.add_argument('--Seq2SeqtrainState', type=bool, default=True, help='Seq2SeqtrainState')
+    parser.add_argument('--validate_step', type=int, default=1, help='which step to calculate loss')
+    parser.add_argument('--validate_dataset', type=str, default='test', help='which dataset to calculate loss')
 
     # optimization
     parser.add_argument('--num_workers', type=int, default=0, help='data loader num workers')
