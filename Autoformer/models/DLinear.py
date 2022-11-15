@@ -9,10 +9,10 @@ class Model(nn.Module):
         super(Model, self).__init__()
         self.seq_len = configs.seq_len
         self.pred_len = configs.pred_len
-        self.use_activation = configs.use_activationc
+        self.use_activation = configs.use_activation
 
         # Decompsition Kernel Size
-        self.decompsition = series_decomp(configs.kernel_size)
+        self.decompsition = series_decomp(configs.moving_avg)
         # self.individual = configs.individual
         # self.channels = configs.enc_in
 
@@ -29,9 +29,9 @@ class Model(nn.Module):
                 # self.Linear_Trend[i].weight = nn.Parameter((1/self.seq_len)*torch.ones([self.pred_len,self.seq_len]))
         # else:
         self.temporallinear_Seasonal = nn.Linear(self.seq_len,self.pred_len)
-        self.outlinear_Seasonal = nn.Linear(configs.enc_in, configs.dec_out)
+        self.outlinear_Seasonal = nn.Linear(configs.enc_in, configs.c_out)
         self.temporallinear_Trend = nn.Linear(self.seq_len,self.pred_len)
-        self.outlinear_Trend = nn.Linear(configs.enc_in, configs.dec_out)
+        self.outlinear_Trend = nn.Linear(configs.enc_in, configs.c_out)
             
             # Use this two lines if you want to visualize the weights
             # self.Linear_Seasonal.weight = nn.Parameter((1/self.seq_len)*torch.ones([self.pred_len,self.seq_len]))
@@ -43,7 +43,8 @@ class Model(nn.Module):
         elif self.use_activation:
             self.activation = F.gelu
 
-    def forward(self, x_enc):
+    def forward(self, x_enc, x_mark_enc, x_dec, x_mark_dec,
+                enc_self_mask=None, dec_self_mask=None, dec_enc_mask=None):
         # x: [Batch, Input length, Channel]
         seasonal_init, trend_init = self.decompsition(x_enc)
         seasonal_init, trend_init = seasonal_init.permute(0,2,1), trend_init.permute(0,2,1)

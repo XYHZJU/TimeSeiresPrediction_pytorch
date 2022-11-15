@@ -1,7 +1,7 @@
 # from Autoformer.models import LogTrans
 from data_provider.data_factory import data_provider
 from exp.exp_basic import Exp_Basic
-from models import Informer, Autoformer, Transformer, Reformer, LogTrans, Fusformer, AutoCoTransformer, Linear_block, STDRNN_singlelayer, STDRNN_multilayer
+from models import Informer, Autoformer, Transformer, Reformer, LogTrans, Fusformer, AutoCoTransformer, Linear_block, STDRNN_singlelayer, STDRNN_multilayer,DLinear
 from utils.tools import EarlyStopping, adjust_learning_rate, visual
 from utils.metrics import metric
 
@@ -34,6 +34,7 @@ class Exp_Main(Exp_Basic):
             'Fusformer': Fusformer,
             'AutoCoTransformer': AutoCoTransformer,
             'Linear':Linear_block,
+            'DLinear':DLinear,
             'SingleRNN':STDRNN_singlelayer,
             'MultiRNN':STDRNN_multilayer
         }
@@ -187,6 +188,7 @@ class Exp_Main(Exp_Basic):
             print("Epoch: {} cost time: {}".format(epoch + 1, time.time() - epoch_time))
             train_loss = np.average(train_loss)
             vali_loss = self.vali(vali_data, vali_loader, criterion)
+            # print('test: ',test_data.shape, test_loader.shape)
             test_loss = self.vali(test_data, test_loader, criterion)
 
             train_loss_curve.append(train_loss)
