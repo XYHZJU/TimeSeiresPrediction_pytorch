@@ -58,11 +58,11 @@ class Model(nn.Module):
         seasonal_output = self.temporallinear_Seasonal(seasonal_init)
         if self.use_activation:
             seasonal_output = self.activation(seasonal_output)
-        seasonal_output = self.outlinear_Seasonal(seasonal_output)
+        seasonal_output = self.outlinear_Seasonal(seasonal_output.permute(0,2,1))
         trend_output = self.temporallinear_Trend(trend_init)
         if self.use_activation:
-            trend_output = self.activation(trend_output)
+            trend_output = self.activation(trend_output.permute(0,2,1))
         trend_output = self.outlinear_Trend(trend_output)
 
         x = seasonal_output + trend_output
-        return x.permute(0,2,1) # to [Batch, Output length, Channel]
+        return x # to [Batch, Output length, Channel]
