@@ -248,6 +248,10 @@ class Dataset_Custom(Dataset):
         if self.scale:
             train_data = df_data[border1s[0]:border2s[0]]
             self.scaler.fit(train_data.values)
+            self.mu = np.mean(train_data.values,axis=0)[-1]
+            self.sigma = np.std(train_data.values,axis=0)[-1]
+            # print('standard: ',mu.shape,sigma.shape)
+            # print('scale shape:',train_data.values.shape)
             data = self.scaler.transform(df_data.values)
         else:
             data = df_data.values
@@ -286,6 +290,9 @@ class Dataset_Custom(Dataset):
 
     def inverse_transform(self, data):
         return self.scaler.inverse_transform(data)
+
+    def inverse(self, data):
+        return data*self.sigma+self.mu
     
 
 class Dataset_Pred(Dataset):
@@ -342,6 +349,8 @@ class Dataset_Pred(Dataset):
 
         if self.scale:
             self.scaler.fit(df_data.values)
+            self.mu = np.mean(df_data.values,axis=0)[-1]
+            self.sigma = np.std(df_data.values,axis=0)[-1]
             data = self.scaler.transform(df_data.values)
         else:
             data = df_data.values
@@ -392,3 +401,6 @@ class Dataset_Pred(Dataset):
 
     def inverse_transform(self, data):
         return self.scaler.inverse_transform(data)
+        
+    def inverse(self, data):
+        return data*self.sigma+self.mu

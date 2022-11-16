@@ -2,7 +2,7 @@
 from data_provider.data_factory import data_provider
 from exp.exp_basic import Exp_Basic
 
-from models import  STDTransformer, AutoCoTransformer, Linear_block, STDRNN_singlelayer, STDRNN_multilayer,RNN_block,DLinear
+from models import  STDTransformer, AutoCoTransformer, Linear_block, STDRNN_singlelayer, STDRNN_multilayer,RNN_block,DLinear,Autoformer
 
 from utils.tools import EarlyStopping, adjust_learning_rate, visual
 from utils.metrics import metric
@@ -27,7 +27,7 @@ class Exp_Main(Exp_Basic):
 
     def _build_model(self):
         model_dict = {
-            # 'Autoformer': Autoformer,
+            'Autoformer': Autoformer,
             # 'Transformer': Transformer,
             # 'Informer': Informer,
             # 'Reformer': Reformer,
@@ -283,10 +283,14 @@ class Exp_Main(Exp_Basic):
                 pred = outputs  # outputs.detach().cpu().numpy()  # .squeeze()
                 true = batch_y  # batch_y.detach().cpu().numpy()  # .squeeze()
 
+                pred = test_data.inverse(pred)
+                true = test_data.inverse(true)
+
                 preds.append(pred)
                 trues.append(true)
                 if i % 20 == 0:
                     input = batch_x.detach().cpu().numpy()
+                    input = test_data.inverse(input)
                     gt = np.concatenate((input[0, :, -1], true[0, :, -1]), axis=0)
                     pd = np.concatenate((input[0, :, -1], pred[0, :, -1]), axis=0)
                     visual(gt, pd, os.path.join(folder_path, str(i) + '.pdf'))
@@ -355,6 +359,7 @@ class Exp_Main(Exp_Basic):
                     else:
                         outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
                 pred = outputs.detach().cpu().numpy()  # .squeeze()
+                pred = pred_data.inverse(pred)
                 preds.append(pred)
 
         preds = np.array(preds)
@@ -643,6 +648,9 @@ class Exp_Main_New(Exp_Basic):
                 pred = outputs  # outputs.detach().cpu().numpy()  # .squeeze()
                 true = batch_y  # batch_y.detach().cpu().numpy()  # .squeeze()
 
+                pred = test_data.inverse(pred)
+                true = test_data.inverse(true)
+
                 preds.append(pred)
                 trues.append(true)
                 if i % 20 == 0:
@@ -712,6 +720,7 @@ class Exp_Main_New(Exp_Basic):
                     else:
                         outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
                 pred = outputs.detach().cpu().numpy()  # .squeeze()
+                pred = pred_data.inverse(pred)
                 preds.append(pred)
 
         preds = np.array(preds)
