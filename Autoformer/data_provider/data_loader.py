@@ -234,8 +234,24 @@ class Dataset_Custom(Dataset):
         num_train = int(len(df_raw) * 0.7)
         num_test = int(len(df_raw) * 0.2)
         num_vali = len(df_raw) - num_train - num_test
-        border1s = [0, num_train - self.seq_len, len(df_raw) - num_test - self.seq_len]
-        border2s = [num_train, num_train + num_vali, len(df_raw)]
+
+        train0 = int(len(df_raw) * 0.0)
+        train1 = int(len(df_raw) * 0.8)
+
+        vali0 = int(len(df_raw) * 0.8)
+        vali1 = int(len(df_raw) * 0.9)
+
+        test0 = int(len(df_raw) * 0.9)
+        test1 = int(len(df_raw) * 0.99)
+
+        border1s = [train0, vali0 - self.seq_len, test0 - self.seq_len]
+        border2s = [train1, vali1, test1]
+
+        # border1s = [0, num_train - self.seq_len, len(df_raw) - num_test - self.seq_len]
+        # border2s = [num_train, num_train + num_vali, len(df_raw)]
+
+
+
         border1 = border1s[self.set_type]
         border2 = border2s[self.set_type]
 

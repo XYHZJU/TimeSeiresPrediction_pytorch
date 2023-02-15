@@ -2,7 +2,7 @@
 from data_provider.data_factory import data_provider
 from exp.exp_basic import Exp_Basic
 
-from models import  STDTransformer, AutoCoTransformer, Linear_block, STDRNN_singlelayer, STDRNN_multilayer,RNN_block,DLinear,Autoformer
+from models import  STDTransformer, AutoCoTransformer, Linear_block,STDRNN_singlelayer, STDRNN_multilayer,RNN_block,DLinear,Autoformer,Transformer,Informer,Reformer, EMDformer
 
 from utils.tools import EarlyStopping, adjust_learning_rate, visual
 from utils.metrics import metric
@@ -28,14 +28,17 @@ class Exp_Main(Exp_Basic):
     def _build_model(self):
         model_dict = {
             'Autoformer': Autoformer,
-            # 'Transformer': Transformer,
-            # 'Informer': Informer,
-            # 'Reformer': Reformer,
+            'Transformer': Transformer,
+            'Informer': Informer,
+            'Reformer': Reformer,
+            'STDTransformer': STDTransformer,
             # 'LogTrans': LogTrans,
             # 'Fusformer': Fusformer,
             'AutoCoTransformer': AutoCoTransformer,
+            'EMDformer': EMDformer,
             'Linear':Linear_block,
             'DLinear':DLinear,
+            'RNN_block':RNN_block,
             'SingleRNN':STDRNN_singlelayer,
             'MultiRNN':STDRNN_multilayer
         }
@@ -308,22 +311,123 @@ class Exp_Main(Exp_Basic):
             os.makedirs(folder_path)
         
         validate_step = min(self.args.validate_step,self.args.pred_len)
-        print('calculate the loss of {}-th step'.format(validate_step))
+        result = []
+        for i in range(1,validate_step+1):
+            print('calculate the loss of {}-th step'.format(i))
 
-        mae, mse, rmse, mape, mspe, r2 = metric(preds[:,validate_step-1,:], trues[:,validate_step-1,:])
-        print('mse:{}, mae:{}, rmse:{}, r2:{}'.format(mse, mae,rmse,r2))
-        f = open("result.txt", 'a')
-        f.write(setting + "  \n")
-        f.write('mse:{}, mae:{}, rmse:{}, r2:{}'.format(mse, mae,rmse,r2))
-        f.write('\n')
-        f.write('\n')
-        f.close()
+            mae, mse, rmse, mape, mspe, r2 = metric(preds[:,i-1,:], trues[:,i-1,:])
+            print('mse:{}, mae:{}, rmse:{}, r2:{}'.format(mse, mae,rmse,r2))
+            result.append([rmse,r2])
+            out = np.array(result)
+            np.savetxt("resultform_test.csv",out,delimiter=',')
+            f = open("result.txt", 'a')
+            f.write(setting + "  \n")
+            f.write('mse:{}, mae:{}, rmse:{}, r2:{}'.format(mse, mae,rmse,r2))
+            f.write('\n')
+            f.write('\n')
+            f.close()
 
         np.save(folder_path + 'metrics.npy', np.array([mae, mse, rmse, mape, mspe, r2]))
         np.save(folder_path + 'pred.npy', preds)
         np.save(folder_path + 'true.npy', trues)
 
         return
+
+    def test_trainset(self, setting, test=0):
+        test_data, test_loader = self._get_data(flag='train')
+        print('validate dataset:{}'.format('train'))
+        if test:
+            print('loading model')
+            self.model.load_state_dict(torch.load(os.path.join('./checkpoints/' + setting, 'checkpoint.pth')))
+
+        preds = []
+        trues = []
+        folder_path = './test_results/' + setting + '/'
+        if not os.path.exists(folder_path):
+            os.makedirs(folder_path)
+
+        self.model.eval()
+        with torch.no_grad():
+            for i, (batch_x, batch_y, batch_x_mark, batch_y_mark) in enumerate(test_loader):
+                batch_x = batch_x.float().to(self.device)
+                batch_y = batch_y.float().to(self.device)
+
+                batch_x_mark = batch_x_mark.float().to(self.device)
+                batch_y_mark = batch_y_mark.float().to(self.device)
+
+                # decoder input
+                dec_inp = torch.zeros_like(batch_y[:, -self.args.pred_len:, :]).float()
+                dec_inp = torch.cat([batch_y[:, :self.args.label_len, :], dec_inp], dim=1).float().to(self.device)
+                # encoder - decoder
+                if self.args.use_amp:
+                    with torch.cuda.amp.autocast():
+                        if self.args.output_attention:
+                            outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)[0]
+                        else:
+                            outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
+                else:
+                    if self.args.output_attention:
+                        outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)[0]
+
+                    else:
+                        outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
+
+                f_dim = -1 if self.args.features == 'MS' else 0
+                outputs = outputs[:, -self.args.pred_len:, f_dim:]
+                batch_y = batch_y[:, -self.args.pred_len:, f_dim:].to(self.device)
+                outputs = outputs.detach().cpu().numpy()
+                batch_y = batch_y.detach().cpu().numpy()
+
+                pred = outputs  # outputs.detach().cpu().numpy()  # .squeeze()
+                true = batch_y  # batch_y.detach().cpu().numpy()  # .squeeze()
+
+                pred = test_data.inverse(pred)
+                true = test_data.inverse(true)
+
+                preds.append(pred)
+                trues.append(true)
+                if i % 20 == 0:
+                    input = batch_x.detach().cpu().numpy()
+                    input = test_data.inverse(input)
+                    gt = np.concatenate((input[0, :, -1], true[0, :, -1]), axis=0)
+                    pd = np.concatenate((input[0, :, -1], pred[0, :, -1]), axis=0)
+                    visual(gt, pd, os.path.join(folder_path, str(i) + '.pdf'))
+
+        preds = np.array(preds)
+        trues = np.array(trues)
+        print('test shape:', preds.shape, trues.shape)
+        preds = preds.reshape(-1, preds.shape[-2], preds.shape[-1])
+        trues = trues.reshape(-1, trues.shape[-2], trues.shape[-1])
+        print('test shape:', preds.shape, trues.shape)
+
+        # result save
+        folder_path = './results/' + setting + '/'
+        if not os.path.exists(folder_path):
+            os.makedirs(folder_path)
+        
+        validate_step = min(self.args.validate_step,self.args.pred_len)
+        result = []
+        for i in range(1,validate_step+1):
+            print('calculate the loss of {}-th step'.format(i))
+
+            mae, mse, rmse, mape, mspe, r2 = metric(preds[:,i-1,:], trues[:,i-1,:])
+            print('mse:{}, mae:{}, rmse:{}, r2:{}'.format(mse, mae,rmse,r2))
+            result.append([rmse,r2])
+            out = np.array(result)
+            np.savetxt("resultform_train.csv",out,delimiter=',')
+            # f = open("result.txt", 'a')
+            # f.write(setting + "  \n")
+            # f.write('mse:{}, mae:{}, rmse:{}, r2:{}'.format(mse, mae,rmse,r2))
+            # f.write('\n')
+            # f.write('\n')
+            # f.close()
+
+        # np.save(folder_path + 'metrics.npy', np.array([mae, mse, rmse, mape, mspe, r2]))
+        # np.save(folder_path + 'pred.npy', preds)
+        # np.save(folder_path + 'true.npy', trues)
+
+        return
+
 
     def predict(self, setting, load=False):
         pred_data, pred_loader = self._get_data(flag='pred')
@@ -374,6 +478,8 @@ class Exp_Main(Exp_Basic):
 
         return
 
+    
+
 
 class Exp_Main_New(Exp_Basic):
     def __init__(self, args):
@@ -405,7 +511,7 @@ class Exp_Main_New(Exp_Basic):
         return data_set, data_loader
 
     def _select_optimizer(self):
-        model_optim = optim.Adam(self.model.parameters(), lr=self.args.learning_rate)
+        model_optim = optim.Adam(self.model.parameters(), lr=self.args.learning_rate,weight_decay=self.args.weight_decay)
         return model_optim
 
     def _select_criterion(self):

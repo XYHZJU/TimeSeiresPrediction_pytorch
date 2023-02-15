@@ -179,13 +179,20 @@ class TemporalEmbedding(nn.Module):
 
     def forward(self, x):
         x = x.long()
-
-        minute_x = self.minute_embed(x[:, :, 4]) if hasattr(self, 'minute_embed') else 0.
+        # print('x shape ', x.shape)
+        minute_x = self.minute_embed(x[:, :, 0]) if hasattr(self, 'minute_embed') else 0.
         hour_x = self.hour_embed(x[:, :, 3])
         weekday_x = self.weekday_embed(x[:, :, 2])
         day_x = self.day_embed(x[:, :, 1])
         month_x = self.month_embed(x[:, :, 0])
-        res = hour_x + weekday_x + day_x + month_x + minute_x
+        res = hour_x + weekday_x + day_x  + minute_x
+
+        # minute_x = self.minute_embed(x[:, :, 3])
+        # hour_x = self.hour_embed(x[:, :, 2])
+        # weekday_x = self.weekday_embed(x[:, :, 1])
+        # day_x = self.day_embed(x[:, :, 0])
+        # # month_x = self.month_embed(x[:, :, 0])
+        # res = hour_x + weekday_x + day_x  + minute_x
         # print("temporal",res.shape)
         return res
 
@@ -263,5 +270,9 @@ class DataEmbedding_wo_pos(nn.Module):
         self.dropout = nn.Dropout(p=dropout)
 
     def forward(self, x, x_mark):
+
+        # print('x1: ',x.shape, self.value_embedding(x).shape)
+        # print('x2: ',x_mark.shape, self.temporal_embedding(x_mark).shape)
+        # print('xmark',x_mark.shape)
         x = self.value_embedding(x) + self.temporal_embedding(x_mark)
         return self.dropout(x)
