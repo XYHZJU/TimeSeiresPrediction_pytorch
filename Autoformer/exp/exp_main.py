@@ -2,7 +2,7 @@
 from data_provider.data_factory import data_provider
 from exp.exp_basic import Exp_Basic
 
-from models import  STDTransformer, AutoCoTransformer, Linear_block,STDRNN_singlelayer, STDRNN_multilayer,RNN_block,DLinear,Autoformer,Transformer,Informer,Reformer, EMDformer
+from models import  STDTransformer, AutoCoTransformer, Linear_block,STDRNN_singlelayer, STDRNN_multilayer,RNN_block,DLinear,Autoformer,Transformer,FEDformer,Reformer, EMDformer, EMDTransformer, Autoformer_sigma,SE_Autoformer
 
 from utils.tools import EarlyStopping, adjust_learning_rate, visual
 from utils.metrics import metric
@@ -28,10 +28,13 @@ class Exp_Main(Exp_Basic):
     def _build_model(self):
         model_dict = {
             'Autoformer': Autoformer,
+            'Autoformer_sigma':Autoformer_sigma,
+            'SE_Autoformer':SE_Autoformer,
             'Transformer': Transformer,
-            'Informer': Informer,
+            'FEDformer':FEDformer,
             'Reformer': Reformer,
             'STDTransformer': STDTransformer,
+            'EMDTransformer': EMDTransformer,
             # 'LogTrans': LogTrans,
             # 'Fusformer': Fusformer,
             'AutoCoTransformer': AutoCoTransformer,

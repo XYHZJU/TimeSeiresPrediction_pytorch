@@ -39,7 +39,7 @@ print(data[:5])
 
 
 # Define the d and q parameters to take any value between 0 and 1
-p = d = q = range(0, 2)
+p = d = q = range(1,5)
 
 # Generate all different combinations of p, q and q triplets
 pdq = list(itertools.product(p, d, q))
@@ -53,56 +53,105 @@ print('SARIMAX: {} x {}'.format(pdq[1], seasonal_pdq[2]))
 print('SARIMAX: {} x {}'.format(pdq[2], seasonal_pdq[3]))
 print('SARIMAX: {} x {}'.format(pdq[2], seasonal_pdq[4]))
 
-train = 0.9
-train_data = data[:int(train*len(data))]
-test_data = data[int(train*len(data)):]
+train = 0.99
+
 
 warnings.filterwarnings("ignore") # specify to ignore warning messages
 AIC = []
 SARIMAX_model = []
+ARIMA_model = []
 
-train_len = 12
-pred_len = 5
+train_len = 30
+pred_len = 10
+
+data = data[int(len(data)*0.9)-train_len:]
+train_data = data[:int(train*len(data))]
+test_data = data[int(train*len(data)):]
+
+# for param in pdq:
+#     for param_seasonal in seasonal_pdq:
+#         try:
+#             mod = sm.tsa.statespace.SARIMAX(train_data[-train_len:],
+#                                             order=param,
+#                                             seasonal_order=param_seasonal,
+#                                             enforce_stationarity=False,
+#                                             enforce_invertibility=False)
+
+#             results = mod.fit()
+
+#             print('ARIMA{}x{}12 - AIC:{}'.format(param, param_seasonal, results.aic))
+#             AIC.append(results.aic)
+#             SARIMAX_model.append([param, param_seasonal])
+#         except:
+#             continue
+# print(data.index)
+# print('最小 AIC 值为: {} 对应模型参数: SARIMAX{}x{}'.format(min(AIC), SARIMAX_model[AIC.index(min(AIC))][0],SARIMAX_model[AIC.index(min(AIC))][1]))
+
 
 for param in pdq:
-    for param_seasonal in seasonal_pdq:
-        try:
-            mod = sm.tsa.statespace.SARIMAX(train_data[-train_len:],
-                                            order=param,
-                                            seasonal_order=param_seasonal,
-                                            enforce_stationarity=False,
-                                            enforce_invertibility=False)
+    
+    try:
+        mod = sm.tsa.statespace.SARIMAX(train_data[-train_len:],
+                                        order=param,
+                                        
+                                        enforce_stationarity=False,
+                                        enforce_invertibility=False)
 
-            results = mod.fit()
+        results = mod.fit()
 
-            print('ARIMA{}x{}12 - AIC:{}'.format(param, param_seasonal, results.aic))
-            AIC.append(results.aic)
-            SARIMAX_model.append([param, param_seasonal])
-        except:
-            continue
+        print('ARIMA{} - AIC:{}'.format(param, results.aic))
+        AIC.append(results.aic)
+        ARIMA_model.append([param])
+    except:
+        continue
 print(data.index)
-print('最小 AIC 值为: {} 对应模型参数: SARIMAX{}x{}'.format(min(AIC), SARIMAX_model[AIC.index(min(AIC))][0],SARIMAX_model[AIC.index(min(AIC))][1]))
+print('最小 AIC 值为: {} 对应模型参数: ARIMA'.format(min(AIC), ARIMA_model[AIC.index(min(AIC))][0]))
+
 
 X = []
 Y = []
 
-for i in range(1,50):
+# for i in range(1,50):
+#     # mod = sm.tsa.statespace.SARIMAX(data[(i-1)*(train_len+pred_len):(i-1)*(train_len+pred_len)+train_len],
+#     #                                 order=(1, 1, 1),
+#     #                                 seasonal_order=(1, 1, 1, 12),
+#     #                                 enforce_stationarity=False,
+#     #                                 enforce_invertibility=False)
+#     mod = sm.tsa.statespace.SARIMAX(train_data[(i-1)*(train_len+pred_len):(i-1)*(train_len+pred_len)+train_len],
+#                                     order=SARIMAX_model[AIC.index(min(AIC))][0],
+#                                     # order = (2,1,1),
+#                                     seasonal_order=SARIMAX_model[AIC.index(min(AIC))][1],
+#                                     enforce_stationarity=False,
+#                                     enforce_invertibility=False)
+
+#     results = mod.fit()
+#     prediction = list(results.forecast(pred_len))
+#     truth = list(data['OT'].values[(i-1)*(train_len+pred_len)+train_len:(i-1)*(train_len+pred_len)+(train_len+pred_len)])
+#     Y.append(prediction)
+#     X.append(truth)
+# print('最小 AIC 值为: {} 对应模型参数: SARIMAX{}x{}'.format(min(AIC), SARIMAX_model[AIC.index(min(AIC))][0],SARIMAX_model[AIC.index(min(AIC))][1]))
+
+
+for i in range(1,60):
     # mod = sm.tsa.statespace.SARIMAX(data[(i-1)*(train_len+pred_len):(i-1)*(train_len+pred_len)+train_len],
     #                                 order=(1, 1, 1),
     #                                 seasonal_order=(1, 1, 1, 12),
     #                                 enforce_stationarity=False,
     #                                 enforce_invertibility=False)
     mod = sm.tsa.statespace.SARIMAX(train_data[(i-1)*(train_len+pred_len):(i-1)*(train_len+pred_len)+train_len],
-                                    order=SARIMAX_model[AIC.index(min(AIC))][0],
-                                    seasonal_order=SARIMAX_model[AIC.index(min(AIC))][1],
+                                    order=ARIMA_model[AIC.index(min(AIC))][0],
+                                    # order = (2,1,1),
+                                    
                                     enforce_stationarity=False,
                                     enforce_invertibility=False)
 
     results = mod.fit()
-    prediction = list(results.forecast(5))
+    prediction = list(results.forecast(pred_len))
     truth = list(data['OT'].values[(i-1)*(train_len+pred_len)+train_len:(i-1)*(train_len+pred_len)+(train_len+pred_len)])
     Y.append(prediction)
     X.append(truth)
+print('最小 AIC 值为: {} 对应模型参数: ARIMA{}'.format(min(AIC), ARIMA_model[AIC.index(min(AIC))][0]))
+
 
 print(np.array(X).shape,np.array(Y).shape)
 
@@ -126,7 +175,8 @@ X = X*sigma + mu
 Y = Y*sigma + mu
 
 print('X shape',X.shape)
-for i in range(0,5):
+print('input len: ',train_len,' pred len: ',pred_len)
+for i in range(0,pred_len):
     X_ = X[:,i]
     Y_ = Y[:,i]
     print('r2: ',i,' ',R2(Y_,X_), 'rmse: ',RMSE(Y_,X_))
