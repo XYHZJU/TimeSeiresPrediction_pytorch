@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from layers.Embed import DataEmbedding, DataEmbedding_wo_pos
 from layers.AutoCorrelation import AutoCorrelation, AutoCorrelationLayer
-from layers.Autoformer_EncDec import Encoder, Decoder, EncoderLayer, DecoderLayer, my_Layernorm, series_decomp, standard_decomp,sigmaEncoderLayer,sigmaDecoderLayer
+from layers.Autoformer_EncDec import Encoder, Decoder, EncoderLayer, DecoderLayer, my_Layernorm, series_decomp,SE_DecoderLayer,SE_Decoder,emd_decomp,EMDEncoderLayer
 import math
 import numpy as np
 
@@ -22,7 +22,7 @@ class Model(nn.Module):
 
         # Decomp
         kernel_size = configs.moving_avg
-        self.decomp = standard_decomp(kernel_size)
+        self.decomp = emd_decomp(kernel_size)
 
         # Embedding
         # The series-wise connection inherently contains the sequential information.
@@ -35,7 +35,7 @@ class Model(nn.Module):
         # Encoder
         self.encoder = Encoder(
             [
-                EncoderLayer(
+                EMDEncoderLayer(
                     AutoCorrelationLayer(
                         AutoCorrelation(False, configs.factor, attention_dropout=configs.dropout,
                                         output_attention=configs.output_attention),
@@ -50,9 +50,9 @@ class Model(nn.Module):
             norm_layer=my_Layernorm(configs.d_model)
         )
         # Decoder
-        self.decoder = Decoder(
+        self.decoder = SE_Decoder(
             [
-                DecoderLayer(
+                SE_DecoderLayer(
                     AutoCorrelationLayer(
                         AutoCorrelation(True, configs.factor, attention_dropout=configs.dropout,
                                         output_attention=False),
@@ -71,7 +71,8 @@ class Model(nn.Module):
                 for l in range(configs.d_layers)
             ],
             norm_layer=my_Layernorm(configs.d_model),
-            projection=nn.Linear(configs.d_model, configs.c_out, bias=True)
+            projection=nn.Linear(configs.d_model, configs.c_out, bias=True),
+            configs=configs
         )
 
     def forward(self, x_enc, x_mark_enc, x_dec, x_mark_dec,
@@ -81,6 +82,7 @@ class Model(nn.Module):
         zeros = torch.zeros([x_dec.shape[0], self.pred_len, x_dec.shape[2]], device=x_enc.device)
         seasonal_init, trend_init = self.decomp(x_enc)
         # decoder input
+        #print("init: ",trend_init.shape)
         trend_init = torch.cat([trend_init[:, -self.label_len:, :], mean], dim=1)
         seasonal_init = torch.cat([seasonal_init[:, -self.label_len:, :], zeros], dim=1)
         # enc

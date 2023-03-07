@@ -2,7 +2,27 @@
 from data_provider.data_factory import data_provider
 from exp.exp_basic import Exp_Basic
 
-from models import  STDTransformer, AutoCoTransformer, Linear_block,STDRNN_singlelayer, STDRNN_multilayer,RNN_block,DLinear,Autoformer,Transformer,FEDformer,Reformer, EMDformer, EMDTransformer, Autoformer_sigma,SE_Autoformer
+from models import  STDTransformer, \
+AutoCoTransformer, \
+Linear_block,\
+STDRNN_singlelayer, \
+STDRNN_multilayer,\
+RNN_block,DLinear,\
+Autoformer,\
+Transformer,\
+FEDformer,\
+Reformer, \
+EMDformer, \
+EMDTransformer, \
+Autoformer_sigma,\
+SE_Autoformer,\
+BiLSTM,\
+Single_BiLSTM,\
+SE_Transformer,\
+STDTransformer_sigma,\
+EMDTransformer_sigma,\
+SE_Transformer_sigma,\
+SE_EMDTransformer
 
 from utils.tools import EarlyStopping, adjust_learning_rate, visual
 from utils.metrics import metric
@@ -35,6 +55,11 @@ class Exp_Main(Exp_Basic):
             'Reformer': Reformer,
             'STDTransformer': STDTransformer,
             'EMDTransformer': EMDTransformer,
+            'SE_Transformer': SE_Transformer,
+            'SE_Transformer_sigma':SE_Transformer_sigma,
+            'STDTransformer_sigma':STDTransformer_sigma,
+            'EMDTransformer_sigma':EMDTransformer_sigma,
+            'SE_EMDTransformer':SE_EMDTransformer,
             # 'LogTrans': LogTrans,
             # 'Fusformer': Fusformer,
             'AutoCoTransformer': AutoCoTransformer,
@@ -43,7 +68,9 @@ class Exp_Main(Exp_Basic):
             'DLinear':DLinear,
             'RNN_block':RNN_block,
             'SingleRNN':STDRNN_singlelayer,
-            'MultiRNN':STDRNN_multilayer
+            'MultiRNN':STDRNN_multilayer,
+            'BiLSTM':BiLSTM,
+            'Single_BiLSTM':Single_BiLSTM
         }
         model = model_dict[self.args.model].Model(self.args).float()
 
@@ -123,6 +150,7 @@ class Exp_Main(Exp_Basic):
         early_stopping = EarlyStopping(patience=self.args.patience, verbose=True)
 
         model_optim = self._select_optimizer()
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(model_optim, 'min',patience = 2)
         criterion = self._select_criterion()
         train_loss_curve = []
         test_loss_curve = []
@@ -191,6 +219,7 @@ class Exp_Main(Exp_Basic):
                 else:
                     loss.backward()
                     model_optim.step()
+                    #scheduler.step(loss)
 
             print("Epoch: {} cost time: {}".format(epoch + 1, time.time() - epoch_time))
             train_loss = np.average(train_loss)

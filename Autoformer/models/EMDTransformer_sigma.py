@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from layers.Autoformer_EncDec import my_Layernorm,series_decomp, Decoder, DecoderLayer, Encoder, EncoderLayer, emd_decomp,EMDDecoderLayer,EMDEncoderLayer,sci_emd_decomp,sci_EMDEncoderLayer,sci_EMDDecoderLayer
+from layers.Autoformer_EncDec import my_Layernorm,series_decomp, Decoder, DecoderLayer, Encoder, EncoderLayer, emd_decomp,EMDDecoderLayer,EMDEncoderLayer,sigmaEMDEncoderLayer,sigmaEMDDecoderLayer,emd_standard_decomp,sci_EMDEncoderLayer,sci_EMDDecoderLayer
 from layers.SelfAttention_Family import FullAttention, AttentionLayer
 from layers.Embed import DataEmbedding
 
@@ -18,7 +18,7 @@ class Model(nn.Module):
 
         # Decomp
         kernel_size = configs.moving_avg
-        self.decomp = sci_emd_decomp(kernel_size)
+        self.decomp = emd_standard_decomp(kernel_size)
 
         # Embedding
         self.enc_embedding = DataEmbedding(configs.enc_in, configs.d_model, configs.embed, configs.freq,
@@ -28,7 +28,7 @@ class Model(nn.Module):
         # Encoder
         self.encoder = Encoder(
             [
-                sci_EMDEncoderLayer(
+                sigmaEMDEncoderLayer(
                     AttentionLayer(
                         FullAttention(False, configs.factor, attention_dropout=configs.dropout,
                                       output_attention=configs.output_attention), configs.d_model, configs.n_heads),
@@ -43,7 +43,7 @@ class Model(nn.Module):
         # Decoder
         self.decoder = Decoder(
             [
-                sci_EMDDecoderLayer(
+                sigmaEMDDecoderLayer(
                     AttentionLayer(
                         FullAttention(True, configs.factor, attention_dropout=configs.dropout, output_attention=False),
                         configs.d_model, configs.n_heads),

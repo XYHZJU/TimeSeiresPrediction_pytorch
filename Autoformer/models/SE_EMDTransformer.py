@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from layers.Autoformer_EncDec import my_Layernorm,series_decomp, Decoder, DecoderLayer, Encoder, EncoderLayer, emd_decomp,EMDDecoderLayer,EMDEncoderLayer,sci_emd_decomp,sci_EMDEncoderLayer,sci_EMDDecoderLayer
+from layers.Autoformer_EncDec import my_Layernorm,series_decomp, Decoder, DecoderLayer, Encoder, EncoderLayer, emd_decomp,EMDDecoderLayer,EMDEncoderLayer,SE_Decoder,SE_DecoderLayer,SE_EMDDecoderLayer,sci_emd_decomp,sci_EMDEncoderLayer
 from layers.SelfAttention_Family import FullAttention, AttentionLayer
 from layers.Embed import DataEmbedding
 
@@ -41,9 +41,9 @@ class Model(nn.Module):
             norm_layer=my_Layernorm(configs.d_model)
         )
         # Decoder
-        self.decoder = Decoder(
+        self.decoder = SE_Decoder(
             [
-                sci_EMDDecoderLayer(
+                SE_EMDDecoderLayer(
                     AttentionLayer(
                         FullAttention(True, configs.factor, attention_dropout=configs.dropout, output_attention=False),
                         configs.d_model, configs.n_heads),
@@ -60,7 +60,8 @@ class Model(nn.Module):
                 for l in range(configs.d_layers)
             ],
             norm_layer=my_Layernorm(configs.d_model),
-            projection=nn.Linear(configs.d_model, configs.c_out, bias=True)
+            projection=nn.Linear(configs.d_model, configs.c_out, bias=True),
+            configs=configs
         )
 
     def forward(self, x_enc, x_mark_enc, x_dec, x_mark_dec,
