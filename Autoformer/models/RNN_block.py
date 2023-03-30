@@ -19,13 +19,13 @@ class Model(nn.Module):
         outputs = torch.zeros(B, self.pred_len, self.dec_out).to(x_enc.device)
         _, hidden = self.encoder(x_enc)
 
-        print("x_enc: ",x_enc.shape)
+        #print("x_enc: ",x_enc.shape)
         x = x_enc[:, -1, -self.dec_out:]
-        print("x: ",x.shape)
+        #print("x: ",x.shape)
         if self.totrain: # teacher force training
             for t in range(self.pred_len):
                 x = x.unsqueeze(1)
-                print("x1: ",x.shape)
+                #print("x1: ",x.shape)
                 output, hidden = self.decoder(x, hidden)
                 output = self.outputlinear(output.squeeze(1))
                 outputs[:,t] = output

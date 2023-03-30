@@ -18,7 +18,7 @@ class Model(nn.Module):
 
         # Decomp
         kernel_size = configs.moving_avg
-        self.decomp = standard_decomp(kernel_size)
+        self.decomp = standard_decomp(kernel_size,configs.enc_in)
 
         # Embedding
         self.enc_embedding = DataEmbedding(configs.enc_in, configs.d_model, configs.embed, configs.freq,

@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from layers.Autoformer_EncDec import my_Layernorm,series_decomp, Decoder, DecoderLayer, Encoder, EncoderLayer, emd_decomp,EMDDecoderLayer,EMDEncoderLayer,SE_Decoder,SE_DecoderLayer,SE_EMDDecoderLayer,sci_emd_decomp,sci_EMDEncoderLayer
+from layers.Autoformer_EncDec import my_Layernorm,series_decomp, Decoder, DecoderLayer, Encoder, EncoderLayer, emd_decomp,EMDDecoderLayer,EMDEncoderLayer,SE_Decoder,SE_DecoderLayer,SE_EMDDecoderLayer,sci_emd_decomp,sci_EMDEncoderLayer,no_decomp_EncoderLayer
 from layers.SelfAttention_Family import FullAttention, AttentionLayer
 from layers.Embed import DataEmbedding
 
@@ -26,8 +26,7 @@ class Model(nn.Module):
         self.dec_embedding = DataEmbedding(configs.dec_in, configs.d_model, configs.embed, configs.freq,
                                            configs.dropout)
         # Encoder
-        self.encoder = Encoder(
-            [
+        self.layers = [
                 sci_EMDEncoderLayer(
                     AttentionLayer(
                         FullAttention(False, configs.factor, attention_dropout=configs.dropout,
@@ -36,8 +35,32 @@ class Model(nn.Module):
                     configs.d_ff,
                     dropout=configs.dropout,
                     activation=configs.activation
-                ) for l in range(configs.e_layers)
-            ],
+                ) 
+        ]
+        self.layers.extend(
+            no_decomp_EncoderLayer(
+                    AttentionLayer(
+                        FullAttention(False, configs.factor, attention_dropout=configs.dropout,
+                                      output_attention=configs.output_attention), configs.d_model, configs.n_heads),
+                    configs.d_model,
+                    configs.d_ff,
+                    dropout=configs.dropout,
+                    activation=configs.activation
+            ) for l in range(configs.e_layers-1)
+        )
+        self.encoder = Encoder(
+            # [
+            #     sci_EMDEncoderLayer(
+            #         AttentionLayer(
+            #             FullAttention(False, configs.factor, attention_dropout=configs.dropout,
+            #                           output_attention=configs.output_attention), configs.d_model, configs.n_heads),
+            #         configs.d_model,
+            #         configs.d_ff,
+            #         dropout=configs.dropout,
+            #         activation=configs.activation
+            #     ) for l in range(configs.e_layers)
+            # ],
+            self.layers,
             norm_layer=my_Layernorm(configs.d_model)
         )
         # Decoder

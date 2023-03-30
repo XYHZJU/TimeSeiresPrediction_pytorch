@@ -12,9 +12,9 @@ python -u run.py \
   --features MS \
   --validate_step 10 \
   --seq_len 10 \
-  --label_len 10 \
+  --label_len 5 \
   --pred_len 10 \
-  --moving_avg 21 \
+  --moving_avg 15 \
   --batch_size 64 \
   --d_model 64 \
   --n_heads 10 \
@@ -25,7 +25,7 @@ python -u run.py \
   --train_epochs 16 \
   --d_ff 256 \
   --e_layers 3 \
-  --d_layers 2 \
+  --d_layers 1 \
   --factor 3 \
   --enc_in 37 \
   --dec_in 37 \

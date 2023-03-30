@@ -17,6 +17,7 @@ EMDTransformer, \
 Autoformer_sigma,\
 SE_Autoformer,\
 BiLSTM,\
+EMDBiLSTM,\
 Single_BiLSTM,\
 SE_Transformer,\
 STDTransformer_sigma,\
@@ -70,6 +71,7 @@ class Exp_Main(Exp_Basic):
             'SingleRNN':STDRNN_singlelayer,
             'MultiRNN':STDRNN_multilayer,
             'BiLSTM':BiLSTM,
+            'EMDBiLSTM':EMDBiLSTM,
             'Single_BiLSTM':Single_BiLSTM
         }
         model = model_dict[self.args.model].Model(self.args).float()

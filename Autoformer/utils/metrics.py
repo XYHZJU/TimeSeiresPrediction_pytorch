@@ -37,6 +37,7 @@ def R2(pred, true):
     return r2
 
 def metric(pred, true):
+    # print('metric: ',pred.shape,true.shape)
     mae = MAE(pred, true)
     mse = MSE(pred, true)
     rmse = RMSE(pred, true)
