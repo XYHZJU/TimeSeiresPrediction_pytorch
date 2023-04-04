@@ -56,6 +56,7 @@ def main():
     parser.add_argument('--d_model', type=int, default=512, help='dimension of model')
     parser.add_argument('--n_heads', type=int, default=8, help='num of heads')
     parser.add_argument('--rnn_layers', type=int, default=2, help='num of rnn layers')
+    parser.add_argument('--decomp_num', type=int, default=5, help='num of decomp series')
     parser.add_argument('--e_layers', type=int, default=2, help='num of encoder layers')
     parser.add_argument('--d_layers', type=int, default=1, help='num of decoder layers')
     parser.add_argument('--d_ff', type=int, default=2048, help='dimension of fcn')

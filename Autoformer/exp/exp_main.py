@@ -19,6 +19,7 @@ SE_Autoformer,\
 BiLSTM,\
 EMDBiLSTM,\
 Single_BiLSTM,\
+Decomp_BiLSTM,\
 SE_Transformer,\
 STDTransformer_sigma,\
 EMDTransformer_sigma,\
@@ -71,6 +72,7 @@ class Exp_Main(Exp_Basic):
             'SingleRNN':STDRNN_singlelayer,
             'MultiRNN':STDRNN_multilayer,
             'BiLSTM':BiLSTM,
+            'Decomp_BiLSTM':Decomp_BiLSTM,
             'EMDBiLSTM':EMDBiLSTM,
             'Single_BiLSTM':Single_BiLSTM
         }
