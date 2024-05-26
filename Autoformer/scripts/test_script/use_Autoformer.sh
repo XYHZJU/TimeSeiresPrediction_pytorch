@@ -5,7 +5,7 @@ python -u run.py \
   --is_training 1 \
   --root_path ./dataset/datagen/ \
   --data_path BTP.csv \
-  --model_id BTP_100_1 \
+  --model_id April+March \
   --model Autoformer \
   --data custom \
   --features MS \
@@ -33,17 +33,21 @@ python -u run.py \
 # python -u run.py \
 #   --is_training 1 \
 #   --root_path ./dataset/datagen/ \
-#   --data_path BTP.csv \
-#   --model_id BTP_100_2 \
+#   --data_path BTP0.csv \
+#   --model_id BTP_100_1 \
 #   --model Autoformer \
 #   --data custom \
 #   --features MS \
-#   --seq_len 100 \
-#   --label_len 10 \
+#   --seq_len 10 \
+#   --label_len 5 \
 #   --pred_len 5 \
-#   --validate_step 2 \
+#   --validate_step 5 \
 #   --e_layers 2 \
 #   --d_layers 1 \
+#   --patience 3 \
+#   --d_ff 256 \
+#   --d_model 64 \
+#   --moving_avg 25 \
 #   --factor 3 \
 #   --enc_in 37 \
 #   --dec_in 37 \

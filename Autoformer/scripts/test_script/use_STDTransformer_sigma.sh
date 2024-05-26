@@ -11,21 +11,21 @@ python -u run.py \
   --data custom \
   --features MS \
   --validate_step 10 \
-  --seq_len 10 \
+  --seq_len 30 \
   --label_len 10 \
   --pred_len 10 \
   --moving_avg 21 \
   --batch_size 64 \
-  --d_model 64 \
+  --d_model 88 \
   --n_heads 10 \
   --patience 7 \
-  --freq s \
+  --freq t \
   --learning_rate 0.0009 \
-  --weight_decay 7 \
+  --weight_decay 4 \
   --train_epochs 25 \
-  --d_ff 256 \
-  --e_layers 3 \
-  --d_layers 2 \
+  --d_ff 288 \
+  --e_layers 2 \
+  --d_layers 1 \
   --factor 3 \
   --enc_in 37 \
   --dec_in 37 \

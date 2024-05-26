@@ -15,14 +15,14 @@ python -u run.py \
   --batch_size 128 \
   --validate_step 10 \
   --learning_rate 0.0009 \
-  --weight_decay 8 \
+  --weight_decay 3 \
   --d_ff 1024 \
   --d_model 256 \
   --e_layers 3 \
   --d_layers 2 \
   --factor 3 \
   --freq t \
-  --moving_avg 15 \
+  --moving_avg 17 \
   --patience 5 \
   --enc_in 37 \
   --dec_in 37 \

@@ -87,7 +87,7 @@ class Model(nn.Module):
         x_enc = x_enc[:,:,-1:]
         x_dec = x_dec[:,:,-1:]
 
-        self.emd_decompose(x_enc)
+        #self.emd_decompose(x_enc)
 
         outputs = torch.zeros(B, self.pred_len, self.dec_out).to(x_enc.device)
         _, hidden = self.encoder(x_enc)

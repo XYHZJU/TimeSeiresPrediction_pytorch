@@ -6,7 +6,7 @@ python -u run.py \
   --root_path ./dataset/datagen/ \
   --data_path BTP0.csv \
   --model_id BTP_100_1 \
-  --model SingleRNN \
+  --model RNN_block \
   --data custom \
   --features MS \
   --seq_len 10 \
@@ -14,7 +14,6 @@ python -u run.py \
   --pred_len 5 \
   --validate_step 5 \
   --rnn_layers 3 \
-  --patience 7 \
   --factor 3 \
   --train_epochs 16 \
   --patience 7 \

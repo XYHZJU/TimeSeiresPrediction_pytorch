@@ -11,15 +11,15 @@ python -u run.py \
   --data custom \
   --features MS \
   --validate_step 10 \
-  --seq_len 10 \
+  --seq_len 30 \
   --label_len 10 \
   --pred_len 10 \
   --moving_avg 17 \
   --batch_size 64 \
   --d_model 64 \
-  --n_heads 10 \
+  --n_heads 12 \
   --patience 7 \
-  --freq t \
+  --freq s \
   --learning_rate 0.0009 \
   --weight_decay 7 \
   --train_epochs 25 \
@@ -32,6 +32,37 @@ python -u run.py \
   --c_out 37 \
   --des 'Exp' \
   --itr 1
+
+# python -u run.py \
+#   --is_training 1 \
+#   --root_path ./dataset/datagen/ \
+#   --data_path BTP.csv \
+#   --model_id BTP_100_1 \
+#   --model SE_Transformer \
+#   --data custom \
+#   --features MS \
+#   --validate_step 10 \
+#   --seq_len 10 \
+#   --label_len 5 \
+#   --pred_len 10 \
+#   --moving_avg 21 \
+#   --batch_size 64 \
+#   --d_model 64 \
+#   --n_heads 10 \
+#   --patience 7 \
+#   --freq s \
+#   --learning_rate 0.0009 \
+#   --weight_decay 12 \
+#   --train_epochs 16 \
+#   --d_ff 256 \
+#   --e_layers 3 \
+#   --d_layers 2 \
+#   --factor 3 \
+#   --enc_in 37 \
+#   --dec_in 37 \
+#   --c_out 37 \
+#   --des 'Exp' \
+#   --itr 1
 
 # python -u run.py \
 #   --is_training 1 \

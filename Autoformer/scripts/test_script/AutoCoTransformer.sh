@@ -61,7 +61,7 @@ python -u run.py \
   --c_out 20 \
   --des 'Exp' \
   --itr 1 \
-  --train_epochs 1
+
 
 python -u run.py \
   --is_training 1 \

@@ -139,14 +139,14 @@ if __name__ == '__main__':
     Y_test = Y_data[train:]
     print('------------2.Parameters Setting-----------')
     n_estimators = 4
-    learn_rate = 0.5
+    learn_rate = 0.05
     min_sample = 30
     min_err = 0.3
     print ("--------------3.build GBDT ---------------")
     gbdt_rt = GBDT_RT()
     gbdt_rt.fit(X_train,Y_train,n_estimators,learn_rate,min_sample, min_err)
     print('-------------4.Predict Result--------------')
-    predict_results = gbdt_rt.GBDT_predicts(X_test)
+    predict_results = gbdt_rt.GBDT_predicts(X_test[:10])
     print('--------------5.Predict Error--------------')
-    rmse,r2 = error(Y_test,predict_results)
+    rmse,r2 = error(Y_test[:10],predict_results)
     print('Predict error is: ',rmse,r2)

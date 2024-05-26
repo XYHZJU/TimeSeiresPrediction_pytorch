@@ -7,7 +7,7 @@ AutoCoTransformer, \
 Linear_block,\
 STDRNN_singlelayer, \
 STDRNN_multilayer,\
-RNN_block,DLinear,\
+RNN_block,DLinear,EnvDLinear,\
 Autoformer,\
 Transformer,\
 FEDformer,\
@@ -74,6 +74,7 @@ class Exp_Main(Exp_Basic):
             'BiLSTM':BiLSTM,
             'Decomp_BiLSTM':Decomp_BiLSTM,
             'EMDBiLSTM':EMDBiLSTM,
+            'EnvDLinear':EnvDLinear,
             'Single_BiLSTM':Single_BiLSTM
         }
         model = model_dict[self.args.model].Model(self.args).float()
@@ -283,6 +284,7 @@ class Exp_Main(Exp_Basic):
 
         preds = []
         trues = []
+        ginput = []
         folder_path = './test_results/' + setting + '/'
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
@@ -316,30 +318,37 @@ class Exp_Main(Exp_Basic):
                 f_dim = -1 if self.args.features == 'MS' else 0
                 outputs = outputs[:, -self.args.pred_len:, f_dim:]
                 batch_y = batch_y[:, -self.args.pred_len:, f_dim:].to(self.device)
+                g_input = batch_x[:,:,-1]
+                # print("batch_x: ",batch_x.shape)
                 outputs = outputs.detach().cpu().numpy()
                 batch_y = batch_y.detach().cpu().numpy()
+                g_input = g_input.detach().cpu().numpy()
 
                 pred = outputs  # outputs.detach().cpu().numpy()  # .squeeze()
                 true = batch_y  # batch_y.detach().cpu().numpy()  # .squeeze()
 
                 pred = test_data.inverse(pred)
                 true = test_data.inverse(true)
+                g_input = test_data.inverse(g_input)
 
                 preds.append(pred)
                 trues.append(true)
-                if i % 20 == 0:
-                    input = batch_x.detach().cpu().numpy()
-                    input = test_data.inverse(input)
-                    gt = np.concatenate((input[0, :, -1], true[0, :, -1]), axis=0)
-                    pd = np.concatenate((input[0, :, -1], pred[0, :, -1]), axis=0)
-                    visual(gt, pd, os.path.join(folder_path, str(i) + '.pdf'))
+                ginput.append(g_input)
+                # if i % 20 == 0:
+                input = batch_x.detach().cpu().numpy()
+                input = test_data.inverse(input)
+                gt = np.concatenate((input[0, :, -1], true[0, :, -1]), axis=0)
+                pd = np.concatenate((input[0, :, -1], pred[0, :, -1]), axis=0)
+                visual(gt, pd, os.path.join(folder_path, str(i) + '.pdf'))
 
         preds = np.array(preds)
         trues = np.array(trues)
-        print('test shape:', preds.shape, trues.shape)
+        ginput = np.array(ginput)
+        print('test shape:', preds.shape, trues.shape,ginput.shape)
         preds = preds.reshape(-1, preds.shape[-2], preds.shape[-1])
         trues = trues.reshape(-1, trues.shape[-2], trues.shape[-1])
-        print('test shape:', preds.shape, trues.shape)
+        ginput = ginput.reshape(-1, ginput.shape[-1], 1)
+        print('test shape:', preds.shape, trues.shape,ginput.shape)
 
         # result save
         folder_path = './results/' + setting + '/'
@@ -354,8 +363,7 @@ class Exp_Main(Exp_Basic):
             mae, mse, rmse, mape, mspe, r2 = metric(preds[:,i-1,:], trues[:,i-1,:])
             print('mse:{}, mae:{}, rmse:{}, r2:{}'.format(mse, mae,rmse,r2))
             result.append([rmse,r2])
-            out = np.array(result)
-            np.savetxt("resultform_test.csv",out,delimiter=',')
+            
             f = open("result.txt", 'a')
             f.write(setting + "  \n")
             f.write('mse:{}, mae:{}, rmse:{}, r2:{}'.format(mse, mae,rmse,r2))
@@ -366,6 +374,9 @@ class Exp_Main(Exp_Basic):
         np.save(folder_path + 'metrics.npy', np.array([mae, mse, rmse, mape, mspe, r2]))
         np.save(folder_path + 'pred.npy', preds)
         np.save(folder_path + 'true.npy', trues)
+        np.save(folder_path + 'input.npy',ginput)
+        out = np.array(result)
+        np.savetxt(folder_path+"resultform_test.csv",out,delimiter=',')
 
         return
 
@@ -422,12 +433,12 @@ class Exp_Main(Exp_Basic):
 
                 preds.append(pred)
                 trues.append(true)
-                if i % 20 == 0:
-                    input = batch_x.detach().cpu().numpy()
-                    input = test_data.inverse(input)
-                    gt = np.concatenate((input[0, :, -1], true[0, :, -1]), axis=0)
-                    pd = np.concatenate((input[0, :, -1], pred[0, :, -1]), axis=0)
-                    visual(gt, pd, os.path.join(folder_path, str(i) + '.pdf'))
+                # if i % 20 == 0:
+                #     input = batch_x.detach().cpu().numpy()
+                #     input = test_data.inverse(input)
+                #     gt = np.concatenate((input[0, :, -1], true[0, :, -1]), axis=0)
+                #     pd = np.concatenate((input[0, :, -1], pred[0, :, -1]), axis=0)
+                #     visual(gt, pd, os.path.join(folder_path, str(i) + '.pdf'))
 
         preds = np.array(preds)
         trues = np.array(trues)
@@ -449,8 +460,7 @@ class Exp_Main(Exp_Basic):
             mae, mse, rmse, mape, mspe, r2 = metric(preds[:,i-1,:], trues[:,i-1,:])
             print('mse:{}, mae:{}, rmse:{}, r2:{}'.format(mse, mae,rmse,r2))
             result.append([rmse,r2])
-            out = np.array(result)
-            np.savetxt("resultform_train.csv",out,delimiter=',')
+            
             # f = open("result.txt", 'a')
             # f.write(setting + "  \n")
             # f.write('mse:{}, mae:{}, rmse:{}, r2:{}'.format(mse, mae,rmse,r2))
@@ -461,7 +471,8 @@ class Exp_Main(Exp_Basic):
         # np.save(folder_path + 'metrics.npy', np.array([mae, mse, rmse, mape, mspe, r2]))
         # np.save(folder_path + 'pred.npy', preds)
         # np.save(folder_path + 'true.npy', trues)
-
+        out = np.array(result)
+        np.savetxt(folder_path+"resultform_train.csv",out,delimiter=',')
         return
 
 
@@ -784,6 +795,7 @@ class Exp_Main_New(Exp_Basic):
                 f_dim = -1 if self.args.features == 'MS' else 0
                 outputs = outputs[:, -self.args.pred_len:, f_dim:]
                 batch_y = batch_y[:, -self.args.pred_len:, f_dim:].to(self.device)
+                
                 outputs = outputs.detach().cpu().numpy()
                 batch_y = batch_y.detach().cpu().numpy()
 

@@ -19,6 +19,8 @@ class Model(nn.Module):
         outputs = torch.zeros(B, self.pred_len, self.dec_out).to(x_enc.device)
         _, hidden = self.encoder(x_enc)
 
+        print("x_dec: ",x_dec.shape)
+
         #print("x_enc: ",x_enc.shape)
         x = x_enc[:, -1, -self.dec_out:]
         #print("x: ",x.shape)
